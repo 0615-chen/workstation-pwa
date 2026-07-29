@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>个人专属工作台</title>
+<meta name="theme-color" content="#4f7cff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="工作台">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2244%22%20fill%3D%22%234f7cff%22%2F%3E%3Cpath%20d%3D%22M52%20102l28%2028%2060-66%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%2216%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+<link rel="manifest" href="manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="application-name" content="工作台">
+<style>
+  :root{
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --text:#1f2937;
+    --muted:#9aa3b2;
+    --soft:#6b7280;
+    --border:#eef1f6;
+    --accent:#4f7cff;
+    --accent-soft:#eef2ff;
+    --done:#aab2c0;
+    --shadow:0 4px 20px rgba(31,45,80,.06);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;
+  }
+  .app{display:flex;min-height:100vh}
+
+  /* ---------- 侧边导航 ---------- */
+  .sidebar{
+    width:236px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);
+    display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+  }
+  .brand{padding:26px 22px 18px;display:flex;align-items:center;gap:12px}
+  .brand .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#4f7cff,#7c9bff);
+    display:flex;align-items:center;justify-content:center;color:#fff}
+  .brand .logo svg{width:20px;height:20px}
+  .brand .name{font-size:17px;font-weight:700;letter-spacing:.5px}
+  .brand .sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .nav{padding:10px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
+  .nav-item{display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:12px;cursor:pointer;
+    color:var(--soft);font-size:14.5px;font-weight:500;transition:.18s;user-select:none}
+  .nav-item svg{width:20px;height:20px;flex-shrink:0;opacity:.85}
+  .nav-item:hover{background:#f6f8fc;color:var(--text)}
+  .nav-item.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .nav-item.active svg{opacity:1}
+  .nav-foot{padding:16px 22px;font-size:11px;color:var(--muted);border-top:1px solid var(--border)}
+
+  /* ---------- 主区域 ---------- */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .view{padding:34px 40px 80px;max-width:860px;width:100%;margin:0 auto}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .view{animation:fade .25s ease}
+
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+  .page-head .title{font-size:24px;font-weight:700}
+  .page-head .desc{font-size:13px;color:var(--muted);margin-top:6px}
+  .head-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .date-pick{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);
+    border-radius:12px;padding:8px 12px;box-shadow:var(--shadow)}
+  .date-pick svg{width:16px;height:16px;color:var(--accent)}
+  .date-pick input{border:none;outline:none;font-size:14px;color:var(--text);font-family:inherit;background:transparent}
+  .btn-reset{border:1px solid var(--border);background:#fff;color:var(--soft);font-size:13px;font-weight:600;
+    padding:9px 14px;border-radius:12px;cursor:pointer;transition:.15s;font-family:inherit;display:flex;align-items:center;gap:6px}
+  .btn-reset:hover{background:#f6f8fc;color:var(--text)}
+  .btn-reset svg{width:14px;height:14px}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .progress-card{padding:11px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .progress-left .pl-title{font-size:12px;color:var(--soft);font-weight:600}
+  .progress-left .pl-num{font-size:20px;font-weight:800;margin-top:2px;letter-spacing:.3px}
+  .progress-left .pl-num b{color:var(--accent)}
+  .bar{flex:1;height:7px;background:#eef1f6;border-radius:99px;overflow:hidden;min-width:90px}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#4f7cff,#7c9bff);border-radius:99px;transition:width .35s ease}
+
+  .list-card{padding:10px 8px}
+  .task{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;transition:.15s}
+  .task:hover{background:#f8fafc}
+  .task + .task{border-top:1px solid var(--border)}
+  .task label.chk{display:flex;align-items:center;gap:12px;flex:1;cursor:pointer}
+  .task input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+  .task .txt{font-size:15px;font-weight:500;word-break:break-word;overflow-wrap:anywhere}
+  .task .tag{font-size:11px;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:99px;margin-left:8px;font-weight:600}
+  .task.done .txt{color:var(--done);text-decoration:line-through}
+  .task.done{opacity:.7}
+  .del{border:none;background:transparent;color:var(--muted);cursor:pointer;width:32px;height:32px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0}
+  .del:hover{background:#fff0f0;color:#ef4444}
+  .del svg{width:16px;height:16px}
+  .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  .add-card{padding:16px 18px;margin-top:16px}
+  .add-form{display:flex;gap:10px;flex-wrap:wrap}
+  .add-form input{flex:1;min-width:160px;border:1px solid var(--border);background:#fafbfc;border-radius:11px;
+    padding:12px 14px;font-size:14px;outline:none;font-family:inherit;transition:.15s;color:var(--text)}
+  .add-form input:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+  .btn{border:none;background:var(--accent);color:#fff;font-weight:600;font-size:14px;padding:12px 22px;
+    border-radius:11px;cursor:pointer;transition:.15s;font-family:inherit;white-space:nowrap}
+  .btn:hover{background:#3d6bf0}
+
+  /* ---------- 悬浮总览 ---------- */
+  .fab{position:fixed;right:22px;bottom:22px;width:46px;height:46px;border-radius:14px;
+    background:linear-gradient(135deg,#4f7cff,#7c9bff);color:#fff;border:none;cursor:pointer;
+    box-shadow:0 8px 28px rgba(79,124,255,.45);display:flex;align-items:center;justify-content:center;transition:.2s;z-index:40}
+  .fab:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(79,124,255,.55)}
+  .fab svg{width:20px;height:20px}
+  .fab .dot{position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;
+    min-width:17px;height:17px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #fff}
+
+  .modal-mask{position:fixed;inset:0;background:rgba(20,28,50,.4);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal-mask.show{display:flex;animation:fade .2s ease}
+  .modal{background:#fff;border-radius:20px;width:100%;max-width:420px;padding:26px;box-shadow:0 20px 60px rgba(20,28,50,.25)}
+  .modal h3{font-size:18px;margin-bottom:4px}
+  .modal .m-date{font-size:13px;color:var(--muted);margin-bottom:20px}
+  .m-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid var(--border)}
+  .m-row .m-name{display:flex;align-items:center;gap:11px;font-weight:600;font-size:15px}
+  .m-row .m-name .ic{width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center}
+  .m-row .m-name .ic svg{width:18px;height:18px}
+  .m-row .m-prog{font-size:15px;font-weight:700}
+  .m-row .m-prog small{color:var(--muted);font-weight:500}
+  .modal .m-foot{margin-top:20px;display:flex;gap:10px}
+  .modal .m-foot .btn{flex:1;text-align:center}
+
+  /* ---------- 响应式：手机端适配 ---------- */
+  @media (max-width:860px){
+    .app{flex-direction:column}
+    .sidebar{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border);
+      flex-direction:row;align-items:center;overflow-x:auto}
+    .brand{padding:12px 16px}
+    .brand .sub{display:none}
+    .nav{flex:1;flex-direction:row;padding:6px 10px;gap:4px;overflow-x:auto}
+    .nav-item{padding:10px 14px;white-space:nowrap}
+    .nav-foot{display:none}
+    .view{padding:26px 20px 90px}
+  }
+  @media (max-width:520px){
+    .page-head{flex-direction:column;align-items:stretch}
+    .head-tools{justify-content:space-between}
+    .progress-card{flex-wrap:wrap;gap:12px}
+    .bar{min-width:100%}
+    .view{padding:20px 14px 90px}
+  }
+
+  /* ---------- 路线规划 ---------- */
+  .route-card{padding:18px 20px}
+  .route-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .route-sub{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .route-body{padding-top:8px}
+  .rstep{display:flex;align-items:center;gap:14px;padding:12px 4px}
+  .rdot{flex-shrink:0;width:34px;height:34px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  .rdot.start{background:#e8f5ee;color:#16a34a}
+  .rinfo{display:flex;flex-direction:column;min-width:0}
+  .rinfo b{font-size:15px;font-weight:600;word-break:break-word}
+  .rinfo span{font-size:12.5px;color:var(--muted);margin-top:2px;word-break:break-word}
+  .rleg{margin-left:17px;padding:2px 0 2px 18px;border-left:2px dashed #e3e8f0;color:var(--soft);font-size:13px}
+  .rtotal{margin-top:14px;padding:14px 16px;background:#f6f8fc;border-radius:12px;font-weight:600;font-size:14px;
+    display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .rtotal .t-val{color:var(--accent)}
+  .route-note{font-size:11.5px;color:var(--muted);margin-top:8px;text-align:right}
+  .route-msg{padding:14px;color:var(--muted);font-size:13.5px}
+
+  /* ---------- 行内编辑 ---------- */
+  .task .edit{width:32px;height:32px;border-radius:9px;border:none;background:transparent;color:var(--muted);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0}
+  .task .edit:hover{background:#eef2ff;color:var(--accent)}
+  .task .edit svg{width:16px;height:16px}
+  .edit-input{flex:1;min-width:140px;border:1px solid var(--accent);border-radius:9px;padding:9px 12px;font-size:14px;outline:none;font-family:inherit;color:var(--text)}
+  .btn-save{border:none;background:var(--accent);color:#fff;font-weight:600;font-size:13px;padding:9px 16px;border-radius:9px;cursor:pointer;font-family:inherit;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边导航 -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+      </div>
+      <div>
+        <div class="name">我的工作台</div>
+        <div class="sub">个人专属 · 本地留存</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-item active" data-page="daily">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>
+        <span>每日计划</span>
+      </div>
+      <div class="nav-item" data-page="measure">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-4.6 4.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l4.6-4.6a2.4 2.4 0 0 1 3.4 0Z"/><path d="M7.5 7.5 10 10"/><path d="M11 11l2.5 2.5"/><path d="M14.5 14.5 17 17"/></svg>
+        <span>量尺计划</span>
+      </div>
+      <div class="nav-item" data-page="remeasure">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        <span>复尺计划</span>
+      </div>
+    </nav>
+    <div class="nav-foot">数据仅保存在本机浏览器 · 不上传云端</div>
+  </aside>
+
+  <!-- 主区域 -->
+  <main class="main">
+    <section class="view" id="view-plan">
+      <div class="page-head">
+        <div>
+          <div class="title" id="p-title">每日计划</div>
+          <div class="desc" id="p-desc"></div>
+        </div>
+        <div class="head-tools">
+          <button class="btn-reset" id="btn-reset" title="清空今日并恢复固定任务">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            重置今日
+          </button>
+          <div class="date-pick">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <input type="date" id="p-date">
+          </div>
+        </div>
+      </div>
+
+      <div class="card progress-card">
+        <div class="progress-left">
+          <div class="pl-title">当日完成进度</div>
+          <div class="pl-num"><b id="p-done">0</b> / <span id="p-total">0</span> 项</div>
+        </div>
+        <div class="bar"><i id="p-bar" style="width:0%"></i></div>
+      </div>
+
+      <div class="card list-card"><ul id="p-list"></ul></div>
+
+      <div class="card add-card">
+        <form class="add-form" id="p-add">
+          <input type="text" name="text" id="p-input" placeholder="添加自定义任务…" maxlength="60" autocomplete="off">
+          <button class="btn" type="submit">添加任务</button>
+        </form>
+      </div>
+
+      <div class="card route-card" id="route-card" style="display:none;margin-top:16px">
+        <div class="route-head">
+          <div>
+            <div class="sec-title" style="margin:0">🚗 路线规划</div>
+            <div class="route-sub">起点：武汉市东西湖区径河街道 · 按驾车耗时自动排序</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn ghost" id="btn-route-set" title="地图设置" style="padding:12px 14px">⚙</button>
+            <button class="btn ghost" id="btn-route">生成最佳路线</button>
+          </div>
+        </div>
+        <div class="route-set" id="route-set" style="display:none;margin:10px 0 4px;padding:14px 16px;background:#f6f8fc;border-radius:12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px">地图服务设置（可选）</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">默认使用 OpenStreetMap（无需 Key）。填入「高德 Key + 安全密钥」可大幅提升国内小区 / 道路的识别率与路线精度（高德开放平台免费申请，类型选「Web端 JS API」）。</div>
+          <div class="add-form" style="flex-direction:column;align-items:stretch">
+            <input type="text" id="amap-key" placeholder="高德 Key（JS API 类型）" autocomplete="off">
+            <input type="text" id="amap-sec" placeholder="安全密钥 securityJsCode" autocomplete="off" style="margin-top:8px">
+            <button class="btn" id="btn-amap-save" type="button" style="margin-top:8px">保存</button>
+          </div>
+        </div>
+        <div id="route-body"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 悬浮总览 -->
+<button class="fab" id="fab" title="今日总览">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+  <span class="dot" id="fab-dot" style="display:none">0</span>
+</button>
+
+  <div class="modal-mask" id="modal">
+    <div class="modal">
+      <h3>今日总览</h3>
+      <div class="m-date" id="modal-date"></div>
+      <div class="m-row">
+        <div class="m-name"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg></span>每日计划</div>
+        <div class="m-prog" id="modal-daily">0<small> / 0</small></div>
+      </div>
+      <div class="m-row">
+        <div class="m-name"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-4.6 4.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l4.6-4.6a2.4 2.4 0 0 1 3.4 0Z"/><path d="M7.5 7.5 10 10"/><path d="M11 11l2.5 2.5"/><path d="M14.5 14.5 17 17"/></svg></span>量尺计划</div>
+        <div class="m-prog" id="modal-measure">0<small> / 0</small></div>
+      </div>
+      <div class="m-row">
+        <div class="m-name"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></span>复尺计划</div>
+        <div class="m-prog" id="modal-remeasure">0<small> / 0</small></div>
+      </div>
+      <div class="m-foot">
+        <button class="btn ghost" id="modal-close" style="background:#f1f4f9;color:var(--soft)">关闭</button>
+        <button class="btn" id="modal-gotoday">回到今日</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="amap-modal">
+    <div class="modal">
+      <h3>🚗 提升地址识别率（可选）</h3>
+      <div class="m-date">你主要在武汉各小区 / 道路间跑量尺，OpenStreetMap 对国内小区覆盖有限。填入「高德 Key + 安全密钥」可让地址识别与路线精度明显提升。</div>
+      <div style="margin:14px 0">
+        <input id="amap-guide-key" type="text" placeholder="高德 Key（JS API 类型，可留空跳过）" style="width:100%;border:1px solid var(--border);border-radius:11px;padding:12px 14px;font-size:14px;outline:none;font-family:inherit;margin-bottom:8px">
+        <input id="amap-guide-sec" type="text" placeholder="安全密钥 securityJsCode" style="width:100%;border:1px solid var(--border);border-radius:11px;padding:12px 14px;font-size:14px;outline:none;font-family:inherit">
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">免费申请：高德开放平台 → 创建应用 → 添加 Key（类型选「Web端 JS API」，并复制其安全密钥）。Key 仅保存在你本机浏览器，不会上传。</div>
+      <div class="m-foot">
+        <button class="btn ghost" id="amap-guide-skip" style="background:#f1f4f9;color:var(--soft)">暂不设置</button>
+        <button class="btn" id="amap-guide-save">保存并使用</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ============ 配置 ============ */
+const PAGES = [
+  { key:'daily',     label:'每日计划', fixed:'好好吃饭',     desc:'勾选打卡你的每日待办，每天自动生成固定任务' },
+  { key:'measure',   label:'量尺计划', fixed:'带齐量尺工具包', desc:'勾选打卡你的量尺待办，每天自动生成固定任务' },
+  { key:'remeasure', label:'复尺计划', fixed:'核对复尺图纸',   desc:'勾选打卡你的复尺待办，每天自动生成固定任务' },
+];
+const STORAGE_KEY = 'workstation_v1';
+
+/* ============ 工具 ============ */
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc = s => (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ============ 数据层 ============ */
+let data = load();
+const state = { page:'daily', dates:{ daily:todayStr(), measure:todayStr(), remeasure:todayStr() } };
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    let d = raw ? JSON.parse(raw) : null;
+    if(!d || typeof d!=='object') d = {};
+    PAGES.forEach(p=>{ if(!d[p.key]) d[p.key]={}; });
+    return d;
+  }catch(e){ return { daily:{}, measure:{}, remeasure:{} }; }
+}
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function ensureDate(page, date){
+  if(!data[page]) data[page] = {};
+  if(!data[page][date]){ data[page][date] = [{ id:uid(), text:PAGES.find(p=>p.key===page).fixed, done:false, fixed:true }]; save(); }
+  return data[page][date];
+}
+function counts(page, date){
+  const list = ensureDate(page, date);
+  const done = list.filter(t=>t.done).length;
+  return { done, total:list.length };
+}
+
+/* ============ 渲染：计划页 ============ */
+function renderPlan(){
+  const cfg = PAGES.find(p=>p.key===state.page);
+  const date = state.dates[state.page];
+  const list = ensureDate(state.page, date);
+  const { done, total } = counts(state.page, date);
+
+  document.getElementById('p-title').textContent = cfg.label;
+  document.getElementById('p-desc').textContent  = cfg.desc;
+  document.getElementById('p-date').value = date;
+  document.getElementById('p-input').placeholder = '添加'+cfg.label.replace('计划','')+'任务，例如：'+cfg.label.replace('计划','')+' — '+sampleHint(state.page);
+  document.getElementById('p-done').textContent  = done;
+  document.getElementById('p-total').textContent = total;
+  document.getElementById('p-bar').style.width = (total? done/total*100 : 0)+'%';
+
+  const ul = document.getElementById('p-list');
+  if(!list.length){ ul.innerHTML = '<div class="empty">暂无任务，先添加一个吧 ✦</div>'; }
+  else {
+    ul.innerHTML = list.map(t=>`
+    <li class="task ${t.done?'done':''}" data-id="${t.id}">
+      <label class="chk">
+        <input type="checkbox" data-id="${t.id}" ${t.done?'checked':''}>
+        <span class="txt">${esc(t.text)}</span>
+        ${t.fixed?'<span class="tag">固定</span>':''}
+      </label>
+      <button class="edit" data-action="edit" data-id="${t.id}" title="编辑">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button>
+      <button class="del" data-action="del" data-id="${t.id}" title="删除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
+      </button>
+    </li>`).join('');
+  }
+
+  // 路线规划（仅量尺 / 复尺页）
+  const isRoute = (state.page==='measure' || state.page==='remeasure');
+  document.getElementById('route-card').style.display = isRoute ? 'block' : 'none';
+  if(isRoute){
+    const sig = list.filter(t=>!t.fixed && (t.text||'').trim()).map(t=>t.text).join('|');
+    if(sig !== lastRouteSig[state.page]){
+      lastRouteSig[state.page] = sig;
+      if(sig) computeRoute();
+      else document.getElementById('route-body').innerHTML = '<div class="route-msg">添加带地址的任务后，即可生成驾车最佳路线。</div>';
+    }
+  }
+}
+function sampleHint(page){
+  return page==='daily' ? '晨间运动 30 分钟' : page==='measure' ? '阳光花园 3-2-1101' : '锦绣家园 5-1-802';
+}
+
+/* ============ 导航 ============ */
+document.getElementById('btn-route').addEventListener('click', computeRoute);
+document.getElementById('btn-route-set').addEventListener('click', ()=>{
+  const s=document.getElementById('route-set');
+  s.style.display = s.style.display==='none' ? 'block' : 'none';
+  if(s.style.display==='block'){
+    document.getElementById('amap-key').value = localStorage.getItem('ws_amap_key')||'';
+    document.getElementById('amap-sec').value = localStorage.getItem('ws_amap_sec')||'';
+  }
+});
+function saveAmapKey(){
+  const k=document.getElementById('amap-key').value.trim();
+  const s=document.getElementById('amap-sec').value.trim();
+  if(k) localStorage.setItem('ws_amap_key', k); else localStorage.removeItem('ws_amap_key');
+  if(s) localStorage.setItem('ws_amap_sec', s); else localStorage.removeItem('ws_amap_sec');
+  try{ localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({})); }catch(e){}
+  lastRouteSig[state.page]='';
+}
+document.getElementById('btn-amap-save').addEventListener('click', ()=>{
+  saveAmapKey();
+  alert('已保存'+(localStorage.getItem('ws_amap_key')?'，将优先使用高德地图':'，已恢复默认地图'));
+  computeRoute();
+});
+document.getElementById('nav').addEventListener('click', e=>{
+  const item = e.target.closest('.nav-item');
+  if(!item) return;
+  state.page = item.dataset.page;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===state.page));
+  renderPlan();
+});
+
+/* ============ 列表交互 ============ */
+document.getElementById('p-list').addEventListener('change', e=>{
+  const cb = e.target.closest('input[type=checkbox]');
+  if(!cb) return;
+  const t = ensureDate(state.page, state.dates[state.page]).find(x=>x.id===cb.dataset.id);
+  if(t){ t.done = cb.checked; save(); renderPlan(); updateFab(); }
+});
+document.getElementById('p-list').addEventListener('click', e=>{
+  const edit = e.target.closest('[data-action=edit]');
+  if(edit){ startEdit(edit.dataset.id); return; }
+  const saveBtn = e.target.closest('[data-action=save]');
+  if(saveBtn){ commitEdit(saveBtn.dataset.id); return; }
+  const del = e.target.closest('[data-action=del]');
+  if(!del) return;
+  const date = state.dates[state.page];
+  data[state.page][date] = data[state.page][date].filter(x=>x.id!==del.dataset.id);
+  save(); renderPlan(); updateFab();
+});
+document.getElementById('p-list').addEventListener('keydown', e=>{
+  if(e.target.classList.contains('edit-input')){
+    if(e.key==='Enter'){ e.preventDefault(); commitEdit(e.target.parentElement.querySelector('[data-action=save]').dataset.id); }
+    else if(e.key==='Escape'){ e.preventDefault(); renderPlan(); }
+  }
+});
+function startEdit(id){
+  const li = document.querySelector('#p-list li[data-id="'+id+'"]');
+  const t = ensureDate(state.page, state.dates[state.page]).find(x=>x.id===id);
+  if(!li || !t) return;
+  li.innerHTML = `<input class="edit-input" value="${esc(t.text)}">
+    <button class="btn-save" data-action="save" data-id="${id}">保存</button>`;
+  const inp = li.querySelector('.edit-input'); inp.focus(); inp.select();
+}
+function commitEdit(id){
+  const li = document.querySelector('#p-list li[data-id="'+id+'"]');
+  const inp = li && li.querySelector('.edit-input');
+  const t = ensureDate(state.page, state.dates[state.page]).find(x=>x.id===id);
+  if(t && inp){ const v=inp.value.trim(); if(v) t.text=v; }
+  save(); renderPlan(); updateFab();
+}
+
+/* ============ 添加 ============ */
+document.getElementById('p-add').addEventListener('submit', e=>{
+  e.preventDefault();
+  const inp = e.target.text, v = inp.value.trim();
+  if(!v) return;
+  ensureDate(state.page, state.dates[state.page]).push({ id:uid(), text:v, done:false, fixed:false });
+  inp.value=''; save(); renderPlan(); updateFab();
+});
+
+/* ============ 日期切换 ============ */
+document.getElementById('p-date').addEventListener('change', e=>{
+  state.dates[state.page] = e.target.value || todayStr();
+  renderPlan(); updateFab();
+});
+
+/* ============ 重置今日 ============ */
+document.getElementById('btn-reset').addEventListener('click', ()=>{
+  if(!confirm('确定重置「'+PAGES.find(p=>p.key===state.page).label+'」的今日任务？将清空今日并恢复固定任务。')) return;
+  const t = todayStr();
+  data[state.page][t] = [{ id:uid(), text:PAGES.find(p=>p.key===state.page).fixed, done:false, fixed:true }];
+  save(); renderPlan(); updateFab();
+});
+
+/* ============ 悬浮今日总览 ============ */
+const modal = document.getElementById('modal');
+function updateFab(){
+  const t = todayStr();
+  let total=0, done=0;
+  PAGES.forEach(p=>{ const c=counts(p.key,t); total+=c.total; done+=c.done; });
+  const dot = document.getElementById('fab-dot');
+  if(total>0 && done<total){ dot.style.display='flex'; dot.textContent = (total-done); }
+  else dot.style.display='none';
+}
+function openModal(){
+  const t = todayStr();
+  document.getElementById('modal-date').textContent = t+'（今天）';
+  const d=counts('daily',t), m=counts('measure',t), r=counts('remeasure',t);
+  document.getElementById('modal-daily').innerHTML     = d.done+'<small> / '+d.total+'</small>';
+  document.getElementById('modal-measure').innerHTML  = m.done+'<small> / '+m.total+'</small>';
+  document.getElementById('modal-remeasure').innerHTML= r.done+'<small> / '+r.total+'</small>';
+  modal.classList.add('show');
+}
+function closeModal(){ modal.classList.remove('show'); }
+document.getElementById('fab').addEventListener('click', openModal);
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-gotoday').addEventListener('click', ()=>{
+  closeModal();
+  state.page='daily'; state.dates.daily=todayStr();
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page==='daily'));
+  renderPlan();
+});
+modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
+const amapModal = document.getElementById('amap-modal');
+function showAmapGuide(){
+  document.getElementById('amap-guide-key').value = localStorage.getItem('ws_amap_key')||'';
+  document.getElementById('amap-guide-sec').value = localStorage.getItem('ws_amap_sec')||'';
+  amapModal.classList.add('show');
+}
+function hideAmapGuide(){ amapModal.classList.remove('show'); try{ localStorage.setItem('ws_amap_prompted','1'); }catch(e){} }
+document.getElementById('amap-guide-skip').addEventListener('click', hideAmapGuide);
+document.getElementById('amap-guide-save').addEventListener('click', ()=>{
+  const k=document.getElementById('amap-guide-key').value.trim();
+  const s=document.getElementById('amap-guide-sec').value.trim();
+  if(k) localStorage.setItem('ws_amap_key', k); else localStorage.removeItem('ws_amap_key');
+  if(s) localStorage.setItem('ws_amap_sec', s); else localStorage.removeItem('ws_amap_sec');
+  try{ localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({})); }catch(e){}
+  lastRouteSig[state.page]='';
+  hideAmapGuide();
+  computeRoute();
+});
+amapModal.addEventListener('click', e=>{ if(e.target===amapModal) hideAmapGuide(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); amapModal.classList.remove('show'); } });
+
+/* ============ 路线规划（量尺 / 复尺） ============ */
+const START_ADDR = '武汉市东西湖区径河街道';
+const GEO_CACHE_KEY = 'ws_geo_cache';
+const lastRouteSig = { measure:'', remeasure:'' };
+
+function geoCacheGet(k){ try{ return (JSON.parse(localStorage.getItem(GEO_CACHE_KEY))||{})[k]; }catch(e){ return null; } }
+function geoCacheSet(k,v){ try{ const m=JSON.parse(localStorage.getItem(GEO_CACHE_KEY))||{}; m[k]=v; localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(m)); }catch(e){} }
+
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const withTimeout = (promise, ms, msg='请求超时') => Promise.race([promise, new Promise((_,reject)=>setTimeout(()=>reject(new Error(msg)), ms))]);
+const CITY_RE = /(武汉|湖北|东西湖|洪山|江汉|武昌|汉阳|硚口|青山|蔡甸|江夏|黄陂|新洲|汉南)/;
+
+function buildQueries(addr){
+  const hasCity = CITY_RE.test(addr);
+  const s = addr.trim().replace(/\s+/g,' ');
+  const set = new Set();
+  const push = q => { if(q && q.trim().length>=2) set.add(hasCity ? q.trim() : (q.trim()+' 武汉市')); };
+  push(s);
+  const notime = s.replace(/\d{1,2}[:：]\d{2}$/,'').replace(/\d{1,2}点.*$/,'').replace(/(上午|下午|晚上)$/,'').trim(); // 去掉时间尾缀
+  if(notime && notime!==s) push(notime);
+  const m = s.match(/^(.*?)(号|室|栋|幢|单元|#)/);          // 去掉房号/楼栋尾缀
+  if(m) push(m[1].trim());
+  const parts = s.split(/[，,，\-—\s]+/).filter(Boolean);     // 取前两个词（小区/道路名）
+  if(parts.length>1) push(parts.slice(0,2).join(' '));
+  if(parts.length>0) push(parts[0]);
+  return [...set];
+}
+async function geocodeNominatim(q){
+  const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=cn&q='+encodeURIComponent(q);
+  try{ const r=await withTimeout(fetch(url,{headers:{'Accept':'application/json'}}), 6000, 'Nominatim 超时'); const j=await r.json();
+    if(j&&j[0]) return {lat:+j[0].lat,lon:+j[0].lon,name:j[0].display_name}; }catch(e){}
+  return null;
+}
+async function geocodePhoton(q){
+  const url='https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=1';
+  try{ const r=await withTimeout(fetch(url), 6000, 'Photon 超时'); const j=await r.json();
+    if(j&&j.features&&j.features[0]){ const f=j.features[0];
+      return {lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],
+              name:(f.properties.name||'')+(f.properties.city?(' '+f.properties.city):'')}; } }catch(e){}
+  return null;
+}
+let _amapLoadPromise = null;
+function loadAMapJS(key, sec){
+  if(window.AMap && window.AMap.Geocoder) return Promise.resolve(window.AMap);
+  if(_amapLoadPromise) return _amapLoadPromise;
+  if(sec) window._AMapSecurityConfig = { securityJsCode: sec };
+  _amapLoadPromise = new Promise((resolve, reject)=>{
+    const timer = setTimeout(()=>reject(new Error('高德脚本加载超时')), 12000);
+    const s = document.createElement('script');
+    s.src = 'https://webapi.amap.com/maps?v=2.0&key='+encodeURIComponent(key)+'&plugin=AMap.Geocoder';
+    s.onload = ()=>{ clearTimeout(timer); resolve(window.AMap); };
+    s.onerror = ()=>{ clearTimeout(timer); reject(new Error('AMap 脚本加载失败')); };
+    document.head.appendChild(s);
+  });
+  return _amapLoadPromise;
+}
+async function geocodeAmap(q, key, sec){
+  try{
+    const AMap = await loadAMapJS(key, sec);
+    return await withTimeout(new Promise(resolve=>{
+      const geo = new AMap.Geocoder({ city:'武汉', extensions:'all' });
+      geo.getLocation(q, (status, result)=>{
+        if(status==='complete' && result.geocodes && result.geocodes.length){
+          const g = result.geocodes[0];
+          const [lon,lat] = g.location.split(',').map(Number);
+          resolve({ lat, lon, name:g.formattedAddress });
+        } else resolve(null);
+      });
+    }), 8000, '高德地理编码超时');
+  }catch(e){ return null; }
+}
+async function geocode(addr){
+  const ck='q:'+addr.trim();
+  const c=geoCacheGet(ck); if(c) return c;
+  const key=localStorage.getItem('ws_amap_key');
+  const sec=localStorage.getItem('ws_amap_sec');
+  const queries=buildQueries(addr);
+  let res=null;
+  if(key){
+    for(const q of queries){ res=await geocodeAmap(q,key,sec); if(res) break; }
+  } else {
+    const nq=queries.slice(0,2);
+    for(let i=0;i<nq.length;i++){ res=await geocodeNominatim(nq[i]); if(res) break; if(i<nq.length-1) await sleep(400); }
+    if(!res) res=await geocodePhoton(queries[0]);
+  }
+  if(res) geoCacheSet(ck, res);
+  return res;
+}
+function solveTSP(D, start){
+  const n = D.length;
+  if(n<=1) return [start];
+  const others = [...Array(n).keys()].filter(i=>i!==start);
+  const order = [start]; let cur = start;
+  while(order.length < n){
+    let best=others[0], bd=Infinity;
+    for(const v of others){ if(!order.includes(v) && D[cur][v] < bd){ bd=D[cur][v]; best=v; } }
+    order.push(best); cur=best;
+  }
+  order.push(start); // 返回起点，构成环线
+  let improved=true;
+  while(improved){
+    improved=false;
+    for(let i=1;i<order.length-2;i++){
+      for(let k=i+1;k<order.length-1;k++){
+        const a=order[i-1], b=order[i], c=order[k], d=order[k+1];
+        if(D[a][c]+D[b][d] + 1e-6 < D[a][b]+D[c][d]){
+          let lo=i, hi=k; while(lo<hi){ const t=order[lo]; order[lo]=order[hi]; order[hi]=t; lo++; hi--; }
+          improved=true;
+        }
+      }
+    }
+  }
+  return order;
+}
+function fmtDur(s){ const m=Math.round(s/60); if(m<60) return m+' 分钟'; return Math.floor(m/60)+' 小时 '+(m%60)+' 分'; }
+function fmtDist(m){ return (m/1000).toFixed(1)+' km'; }
+
+const START_FALLBACK = { lat:30.6300, lon:114.2000 };
+async function resolveStart(){
+  const g = await geocode(START_ADDR);
+  if(g) return { ...g, sub:'武汉市东西湖区（起点）' };
+  return { ...START_FALLBACK, name:'径河街道(近似坐标)', sub:'武汉市东西湖区（起点·近似坐标）' };
+}
+async function computeRoute(){
+  const page = state.page;
+  const list = ensureDate(page, state.dates[page]).filter(t=>!t.fixed && (t.text||'').trim());
+  const body = document.getElementById('route-body');
+  if(!list.length){ body.innerHTML='<div class="route-msg">添加带地址的任务后，即可生成驾车最佳路线。</div>'; return; }
+  body.innerHTML='<div class="route-msg">正在规划路线…（联网计算中，请稍候）</div>';
+  const amapKey = localStorage.getItem('ws_amap_key');
+  if(amapKey){
+    try{ await loadAMapJS(amapKey, localStorage.getItem('ws_amap_sec')); }
+    catch(err){
+      body.innerHTML='<div class="route-msg">高德地图脚本加载失败：'+(err.message||'')+'。<br>请逐项核对：① Key 类型须为「<b>Web端 (JS API)</b>」（不是 Web服务）；② 安全密钥已正确粘贴；③ 若用预览链接打开，需把预览域名加入该 Key 的「域名白名单」，或<b>改用本地双击打开</b>（file:// 通常无需白名单）。</div>';
+      return;
+    }
+  }
+  try{
+    const pts=[];
+    const startG = await resolveStart();
+    pts.push({ label:START_ADDR, sub:startG.sub, lat:startG.lat, lon:startG.lon, name:startG.name });
+    const unresolved=[];
+    for(const t of list){
+      const g = await geocode(t.text);
+      if(g){ g.label=t.text; g.sub=g.name; pts.push(g); }
+      else unresolved.push(t.text);
+    }
+    if(pts.length<2){
+      body.innerHTML='<div class="route-msg">未能解析出任何有效地址。<br>① 请在 ⚙ 中填入「高德 Key + 安全密钥」（类型必须选 <b>Web端 JS API</b>），这是大陆网络下唯一可靠的方案；<br>② 地址写得更具体（小区 / 道路全名）；<br>③ 若用预览链接打开，需把预览域名加入该 Key 的「域名白名单」。</div>';
+      return;
+    }
+    const coords = pts.map(p=>p.lon+','+p.lat).join(';');
+    const r = await withTimeout(fetch('https://router.project-osrm.org/table/v1/driving/'+coords+'?annotations=duration,distance'), 15000, '路线网络请求超时');
+    const j = await r.json();
+    if(j.code!=='Ok' || !j.durations) throw new Error('路线计算失败');
+    const D=j.durations, Dist=j.distances;
+    const order = solveTSP(D, 0);
+    let totalT=0, totalD=0, html='';
+    order.forEach((pi, idx)=>{
+      const isStart = idx===0, isReturn = idx===order.length-1;
+      const dotClass = isStart ? 'rdot start' : 'rdot';
+      const dotTxt = isStart ? '起' : (isReturn ? '返' : String(idx));
+      const label = isReturn ? '返回 径河街道（起点）' : esc(pts[pi].label);
+      const sub   = isReturn ? '武汉市东西湖区' : esc(pts[pi].sub);
+      html += `<div class="rstep"><div class="${dotClass}">${dotTxt}</div><div class="rinfo"><b>${label}</b><span>${sub}</span></div></div>`;
+      if(idx < order.length-1){
+        const dur=D[pi][order[idx+1]], dis=Dist[pi][order[idx+1]];
+        totalT+=dur; totalD+=dis;
+        const ret = idx===order.length-2 ? '（返程）' : '';
+        html += `<div class="rleg">↓ 驾车 ${fmtDur(dur)} · ${fmtDist(dis)}${ret}</div>`;
+      }
+    });
+    if(unresolved.length){
+      html = '<div class="route-msg" style="margin-bottom:10px">⚠ 以下地址未能定位，已跳过：'+unresolved.map(esc).join('、')+'（可在 ⚙ 配置高德 Key 后点「生成最佳路线」重试）</div>' + html;
+    }
+    html += `<div class="rtotal"><span>总耗时 ≈ <span class="t-val">${fmtDur(totalT)}</span></span><span>总里程 ≈ <span class="t-val">${fmtDist(totalD)}</span></span></div>`;
+    html += `<div class="route-note">路线按驾车耗时排序并返回起点，基于 OpenStreetMap 路网估算，实际以车载导航为准</div>`;
+    body.innerHTML = html;
+  }catch(e){
+    body.innerHTML='<div class="route-msg">路线规划未完成：'+(e.message||'网络或地图服务异常')+'。<br>若已填高德 Key 仍失败，请确认：① Key 类型须为「Web端 JS API」；② 安全密钥正确；③ 预览域名已加入该 Key 的「域名白名单」（本地双击打开则无需）。无 Key 时依赖 OpenStreetMap，在大陆网络下通常不可达。</div>';
+  }
+}
+
+/* ============ 启动 ============ */
+renderPlan();
+updateFab();
+if(!localStorage.getItem('ws_amap_key') && !localStorage.getItem('ws_amap_prompted')) showAmapGuide();
+</script>
+<script>
+// 注册 Service Worker：让主屏图标以「独立 APP」方式打开，并支持离线
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
